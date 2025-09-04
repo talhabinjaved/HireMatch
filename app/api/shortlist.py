@@ -21,6 +21,7 @@ def create_shortlist(
         report = shortlist_service.run_shortlisting(
             current_user.id,
             shortlist_data.job_description_id,
+            shortlist_data.cv_ids,
             shortlist_data.threshold,
             db
         )

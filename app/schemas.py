@@ -97,6 +97,7 @@ class ShortlistBase(BaseModel):
 
 class ShortlistCreate(ShortlistBase):
     job_description_id: int
+    cv_ids: List[int]
 
 
 class Shortlist(ShortlistBase):

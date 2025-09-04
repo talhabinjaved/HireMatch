@@ -104,7 +104,7 @@ Once running, visit `http://localhost:8000/docs` for interactive API documentati
 - `DELETE /jobs/{job_id}` - Delete job description
 
 #### Shortlisting
-- `POST /shortlist/` - Run shortlisting analysis
+- `POST /shortlist/` - Run shortlisting analysis on specific CVs against a job description
 - `GET /shortlist/` - Get shortlist history
 - `GET /shortlist/{shortlist_id}` - Get specific shortlist
 - `DELETE /shortlist/{shortlist_id}` - Delete shortlist
@@ -144,6 +144,7 @@ curl -X POST "http://localhost:8000/shortlist/" \
   -H "Content-Type: application/json" \
   -d '{
     "job_description_id": 1,
+    "cv_ids": [1, 2, 3],
     "threshold": 0.6
   }'
 ```

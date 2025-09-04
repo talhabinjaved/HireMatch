@@ -61,13 +61,26 @@ class ShortlistService:
         
         return job_description
     
-    def run_shortlisting(self, user_id: int, job_description_id: int, threshold: float, db: Session) -> ShortlistReport:
+    def run_shortlisting(self, user_id: int, job_description_id: int, cv_ids: List[int], threshold: float, db: Session) -> ShortlistReport:
         user = db.query(User).filter(User.id == user_id).first()
         job_description = db.query(JobDescription).filter(JobDescription.id == job_description_id).first()
-        cvs = db.query(CV).filter(CV.user_id == user_id).all()
         
-        if not job_description or not cvs:
-            raise ValueError("Job description or CVs not found")
+        if not job_description:
+            raise ValueError("Job description not found")
+        
+        # Get only the specified CVs that belong to the user
+        cvs = db.query(CV).filter(
+            CV.id.in_(cv_ids),
+            CV.user_id == user_id
+        ).all()
+        
+        if not cvs:
+            raise ValueError("No CVs found with the specified IDs")
+        
+        if len(cvs) != len(cv_ids):
+            found_cv_ids = [cv.id for cv in cvs]
+            missing_cv_ids = set(cv_ids) - set(found_cv_ids)
+            raise ValueError(f"Some CVs not found or not accessible: {missing_cv_ids}")
         
         job_embedding = self.ai_service.generate_embedding(job_description.content)
         
