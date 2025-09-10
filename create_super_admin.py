@@ -14,7 +14,7 @@ import getpass
 from sqlalchemy.orm import Session
 from app.database import engine, SessionLocal
 from app.models import User
-from app.auth import OAuth2Service
+from app.services.auth_service import AuthService
 
 def create_super_admin():
     """Create a super admin user interactively"""
@@ -73,7 +73,7 @@ def create_super_admin():
             return
         
         # Create super admin user
-        hashed_password = OAuth2Service.get_password_hash(password)
+        hashed_password = AuthService.get_password_hash(password)
         
         super_admin = User(
             email=email,

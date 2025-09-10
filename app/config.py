@@ -14,8 +14,6 @@ class Settings(BaseSettings):
     
     # OAuth2 Settings
     oauth2_access_token_expire_seconds: int = 3600  # 1 hour
-    default_client_rate_limit: int = 1000  # requests per hour
-    max_rate_limit: int = 10000  # maximum requests per hour for any client
     
     # Security Settings
     bcrypt_rounds: int = 12

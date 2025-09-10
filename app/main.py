@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine
 from app.models import Base
-from app.api import auth, cvs, jobs, shortlist
+from app.api import auth, cvs, jobs, shortlist, clients, analytics
 
 app = FastAPI(
     title="HireMatch AI",
@@ -21,6 +21,8 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+app.include_router(clients.router, prefix="/clients", tags=["Client Management"])
+app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 app.include_router(cvs.router, prefix="/cvs", tags=["CV Management"])
 app.include_router(jobs.router, prefix="/jobs", tags=["Job Descriptions"])
 app.include_router(shortlist.router, prefix="/shortlist", tags=["Shortlisting"])

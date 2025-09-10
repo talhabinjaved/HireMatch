@@ -145,10 +145,6 @@ class UserUpdate(BaseModel):
 class OAuth2ClientBase(BaseModel):
     name: str
     description: Optional[str] = None
-    client_type: str = "confidential"  # confidential or public
-    allowed_scopes: List[str] = ["read", "write"]
-    redirect_uris: List[str] = []
-    rate_limit_per_hour: int = 1000
 
 
 class OAuth2ClientCreate(OAuth2ClientBase):
@@ -158,9 +154,6 @@ class OAuth2ClientCreate(OAuth2ClientBase):
 class OAuth2ClientUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    allowed_scopes: Optional[List[str]] = None
-    redirect_uris: Optional[List[str]] = None
-    rate_limit_per_hour: Optional[int] = None
     is_active: Optional[bool] = None
 
 
@@ -185,22 +178,22 @@ class ClientCredentialsToken(BaseModel):
     access_token: str
     token_type: str = "Bearer"
     expires_in: int
-    scope: str
 
 
-class APIUsageStats(BaseModel):
+class ClientStats(BaseModel):
     client_id: str
-    total_requests: int
-    requests_last_24h: int
-    requests_last_hour: int
-    average_response_time: float
-    error_rate: float
+    client_name: str
+    total_cvs: int
+    total_jobs: int
+    total_shortlists: int
+    is_active: bool
+    last_used_at: Optional[datetime] = None
+    created_at: datetime
 
 
 class AccessTokenInfo(BaseModel):
     id: str
     client_id: str
-    scopes: List[str]
     is_active: bool
     expires_at: datetime
     created_at: datetime

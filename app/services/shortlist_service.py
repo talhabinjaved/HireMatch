@@ -12,7 +12,7 @@ class ShortlistService:
     def __init__(self):
         self.ai_service = AIService()
     
-    def process_cv_upload(self, file_content: bytes, filename: str, user_id: int, db: Session) -> CV:
+    def process_cv_upload(self, file_content: bytes, filename: str, client_id: str, db: Session) -> CV:
         with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(filename)[1]) as temp_file:
             temp_file.write(file_content)
             temp_file_path = temp_file.name
@@ -23,7 +23,7 @@ class ShortlistService:
             embedding = self.ai_service.generate_embedding(content)
             
             cv = CV(
-                user_id=user_id,
+                client_id=client_id,
                 filename=filename,
                 candidate_name=candidate_name,
                 contact_info=contact_info,
@@ -40,38 +40,33 @@ class ShortlistService:
         finally:
             os.unlink(temp_file_path)
     
-    def process_job_description(self, job_data: Dict[str, Any], user_id: int, db: Session) -> JobDescription:
-        content = job_data.get('content', '')
-        title = job_data.get('title', 'Job Description')
-        summary = job_data.get('summary', '')
+    async def process_job_description(self, content: str) -> Dict[str, Any]:
+        """Process job description content and extract key information using AI"""
+        key_requirements = await self.ai_service.extract_job_requirements(content)
         
-        key_requirements = self.ai_service.extract_job_requirements(content)
+        # Extract title and summary using AI
+        job_analysis = await self.ai_service.analyze_job_description(content)
         
-        job_description = JobDescription(
-            user_id=user_id,
-            title=title,
-            summary=summary,
-            key_requirements=key_requirements,
-            content=content
-        )
-        
-        db.add(job_description)
-        db.commit()
-        db.refresh(job_description)
-        
-        return job_description
+        return {
+            "title": job_analysis.get("title", "Job Description"),
+            "summary": job_analysis.get("summary", ""),
+            "key_requirements": key_requirements,
+            "content": content
+        }
     
-    def run_shortlisting(self, user_id: int, job_description_id: int, cv_ids: List[int], threshold: float, db: Session) -> ShortlistReport:
-        user = db.query(User).filter(User.id == user_id).first()
-        job_description = db.query(JobDescription).filter(JobDescription.id == job_description_id).first()
+    def run_shortlisting(self, client_id: str, job_description_id: str, cv_ids: List[str], threshold: float, db: Session) -> ShortlistReport:
+        job_description = db.query(JobDescription).filter(
+            JobDescription.id == job_description_id,
+            JobDescription.client_id == client_id
+        ).first()
         
         if not job_description:
             raise ValueError("Job description not found")
         
-        # Get only the specified CVs that belong to the user
+        # Get only the specified CVs that belong to the client
         cvs = db.query(CV).filter(
             CV.id.in_(cv_ids),
-            CV.user_id == user_id
+            CV.client_id == client_id
         ).all()
         
         if not cvs:
@@ -85,7 +80,7 @@ class ShortlistService:
         job_embedding = self.ai_service.generate_embedding(job_description.content)
         
         shortlist = Shortlist(
-            user_id=user_id,
+            client_id=client_id,
             job_description_id=job_description_id,
             threshold=threshold
         )

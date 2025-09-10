@@ -19,9 +19,6 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    job_descriptions = relationship("JobDescription", back_populates="user")
-    cvs = relationship("CV", back_populates="user")
-    shortlists = relationship("Shortlist", back_populates="user")
     created_clients = relationship("OAuth2Client", back_populates="created_by_user")
 
 
@@ -29,14 +26,14 @@ class JobDescription(Base):
     __tablename__ = "job_descriptions"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
-    user_id = Column(String, ForeignKey("users.id"))
+    client_id = Column(String, ForeignKey("oauth2_clients.client_id"), nullable=False)
     title = Column(String)
     summary = Column(Text)
     key_requirements = Column(JSON)
     content = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    user = relationship("User", back_populates="job_descriptions")
+    client = relationship("OAuth2Client", foreign_keys=[client_id])
     shortlists = relationship("Shortlist", back_populates="job_description")
 
 
@@ -44,7 +41,7 @@ class CV(Base):
     __tablename__ = "cvs"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
-    user_id = Column(String, ForeignKey("users.id"))
+    client_id = Column(String, ForeignKey("oauth2_clients.client_id"), nullable=False)
     filename = Column(String)
     candidate_name = Column(String)
     contact_info = Column(JSON)
@@ -52,7 +49,7 @@ class CV(Base):
     embedding = Column(JSON)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    user = relationship("User", back_populates="cvs")
+    client = relationship("OAuth2Client", foreign_keys=[client_id])
     shortlist_results = relationship("ShortlistResult", back_populates="cv")
 
 
@@ -60,12 +57,12 @@ class Shortlist(Base):
     __tablename__ = "shortlists"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
-    user_id = Column(String, ForeignKey("users.id"))
+    client_id = Column(String, ForeignKey("oauth2_clients.client_id"), nullable=False)
     job_description_id = Column(String, ForeignKey("job_descriptions.id"))
     threshold = Column(Float, default=0.6)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    user = relationship("User", back_populates="shortlists")
+    client = relationship("OAuth2Client", foreign_keys=[client_id])
     job_description = relationship("JobDescription", back_populates="shortlists")
     results = relationship("ShortlistResult", back_populates="shortlist")
 
@@ -96,10 +93,6 @@ class OAuth2Client(Base):
     name = Column(String, nullable=False)
     description = Column(Text)
     is_active = Column(Boolean, default=True)
-    client_type = Column(String, default="confidential")  # confidential or public
-    allowed_scopes = Column(JSON, default=lambda: ["read", "write"])
-    redirect_uris = Column(JSON, default=list)
-    rate_limit_per_hour = Column(Integer, default=1000)
     last_used_at = Column(DateTime(timezone=True))
     created_by = Column(String, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -107,6 +100,9 @@ class OAuth2Client(Base):
     
     created_by_user = relationship("User", back_populates="created_clients")
     access_tokens = relationship("AccessToken", back_populates="client")
+    job_descriptions = relationship("JobDescription", foreign_keys="JobDescription.client_id")
+    cvs = relationship("CV", foreign_keys="CV.client_id")
+    shortlists = relationship("Shortlist", foreign_keys="Shortlist.client_id")
 
 
 class AccessToken(Base):
@@ -115,8 +111,7 @@ class AccessToken(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
     token_hash = Column(String, unique=True, index=True, nullable=False)
     client_id = Column(String, ForeignKey("oauth2_clients.client_id"), nullable=False)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True)  # null for client credentials flow
-    scopes = Column(JSON, default=list)
+    user_id = Column(String, ForeignKey("users.id"), nullable=True)  # null for pure OAuth2
     is_active = Column(Boolean, default=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -125,14 +120,3 @@ class AccessToken(Base):
     client = relationship("OAuth2Client", back_populates="access_tokens")
 
 
-class APIUsage(Base):
-    __tablename__ = "api_usage"
-    
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
-    client_id = Column(String, ForeignKey("oauth2_clients.client_id"), nullable=False)
-    endpoint = Column(String, nullable=False)
-    method = Column(String, nullable=False)
-    status_code = Column(Integer, nullable=False)
-    request_time = Column(DateTime(timezone=True), server_default=func.now())
-    response_time_ms = Column(Float)
-    ip_address = Column(String)

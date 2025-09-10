@@ -1,8 +1,8 @@
 """inital migrations
 
-Revision ID: d35b4fe02991
+Revision ID: ce2e4775a16c
 Revises: 
-Create Date: 2025-09-11 03:28:51.949308
+Create Date: 2025-09-11 04:26:06.440626
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd35b4fe02991'
+revision: str = 'ce2e4775a16c'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -36,31 +36,6 @@ def upgrade() -> None:
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)
-    op.create_table('cvs',
-    sa.Column('id', sa.String(), nullable=False),
-    sa.Column('user_id', sa.String(), nullable=True),
-    sa.Column('filename', sa.String(), nullable=True),
-    sa.Column('candidate_name', sa.String(), nullable=True),
-    sa.Column('contact_info', sa.JSON(), nullable=True),
-    sa.Column('content', sa.Text(), nullable=True),
-    sa.Column('embedding', sa.JSON(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_cvs_id'), 'cvs', ['id'], unique=False)
-    op.create_table('job_descriptions',
-    sa.Column('id', sa.String(), nullable=False),
-    sa.Column('user_id', sa.String(), nullable=True),
-    sa.Column('title', sa.String(), nullable=True),
-    sa.Column('summary', sa.Text(), nullable=True),
-    sa.Column('key_requirements', sa.JSON(), nullable=True),
-    sa.Column('content', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_job_descriptions_id'), 'job_descriptions', ['id'], unique=False)
     op.create_table('oauth2_clients',
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('client_id', sa.String(), nullable=False),
@@ -68,10 +43,6 @@ def upgrade() -> None:
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
-    sa.Column('client_type', sa.String(), nullable=True),
-    sa.Column('allowed_scopes', sa.JSON(), nullable=True),
-    sa.Column('redirect_uris', sa.JSON(), nullable=True),
-    sa.Column('rate_limit_per_hour', sa.Integer(), nullable=True),
     sa.Column('last_used_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_by', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
@@ -86,7 +57,6 @@ def upgrade() -> None:
     sa.Column('token_hash', sa.String(), nullable=False),
     sa.Column('client_id', sa.String(), nullable=False),
     sa.Column('user_id', sa.String(), nullable=True),
-    sa.Column('scopes', sa.JSON(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
@@ -97,27 +67,39 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_access_tokens_id'), 'access_tokens', ['id'], unique=False)
     op.create_index(op.f('ix_access_tokens_token_hash'), 'access_tokens', ['token_hash'], unique=True)
-    op.create_table('api_usage',
+    op.create_table('cvs',
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('client_id', sa.String(), nullable=False),
-    sa.Column('endpoint', sa.String(), nullable=False),
-    sa.Column('method', sa.String(), nullable=False),
-    sa.Column('status_code', sa.Integer(), nullable=False),
-    sa.Column('request_time', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
-    sa.Column('response_time_ms', sa.Float(), nullable=True),
-    sa.Column('ip_address', sa.String(), nullable=True),
+    sa.Column('filename', sa.String(), nullable=True),
+    sa.Column('candidate_name', sa.String(), nullable=True),
+    sa.Column('contact_info', sa.JSON(), nullable=True),
+    sa.Column('content', sa.Text(), nullable=True),
+    sa.Column('embedding', sa.JSON(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
     sa.ForeignKeyConstraint(['client_id'], ['oauth2_clients.client_id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_api_usage_id'), 'api_usage', ['id'], unique=False)
+    op.create_index(op.f('ix_cvs_id'), 'cvs', ['id'], unique=False)
+    op.create_table('job_descriptions',
+    sa.Column('id', sa.String(), nullable=False),
+    sa.Column('client_id', sa.String(), nullable=False),
+    sa.Column('title', sa.String(), nullable=True),
+    sa.Column('summary', sa.Text(), nullable=True),
+    sa.Column('key_requirements', sa.JSON(), nullable=True),
+    sa.Column('content', sa.Text(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.ForeignKeyConstraint(['client_id'], ['oauth2_clients.client_id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_job_descriptions_id'), 'job_descriptions', ['id'], unique=False)
     op.create_table('shortlists',
     sa.Column('id', sa.String(), nullable=False),
-    sa.Column('user_id', sa.String(), nullable=True),
+    sa.Column('client_id', sa.String(), nullable=False),
     sa.Column('job_description_id', sa.String(), nullable=True),
     sa.Column('threshold', sa.Float(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
+    sa.ForeignKeyConstraint(['client_id'], ['oauth2_clients.client_id'], ),
     sa.ForeignKeyConstraint(['job_description_id'], ['job_descriptions.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_shortlists_id'), 'shortlists', ['id'], unique=False)
@@ -146,18 +128,16 @@ def downgrade() -> None:
     op.drop_table('shortlist_results')
     op.drop_index(op.f('ix_shortlists_id'), table_name='shortlists')
     op.drop_table('shortlists')
-    op.drop_index(op.f('ix_api_usage_id'), table_name='api_usage')
-    op.drop_table('api_usage')
+    op.drop_index(op.f('ix_job_descriptions_id'), table_name='job_descriptions')
+    op.drop_table('job_descriptions')
+    op.drop_index(op.f('ix_cvs_id'), table_name='cvs')
+    op.drop_table('cvs')
     op.drop_index(op.f('ix_access_tokens_token_hash'), table_name='access_tokens')
     op.drop_index(op.f('ix_access_tokens_id'), table_name='access_tokens')
     op.drop_table('access_tokens')
     op.drop_index(op.f('ix_oauth2_clients_id'), table_name='oauth2_clients')
     op.drop_index(op.f('ix_oauth2_clients_client_id'), table_name='oauth2_clients')
     op.drop_table('oauth2_clients')
-    op.drop_index(op.f('ix_job_descriptions_id'), table_name='job_descriptions')
-    op.drop_table('job_descriptions')
-    op.drop_index(op.f('ix_cvs_id'), table_name='cvs')
-    op.drop_table('cvs')
     op.drop_index(op.f('ix_users_username'), table_name='users')
     op.drop_index(op.f('ix_users_id'), table_name='users')
     op.drop_index(op.f('ix_users_email'), table_name='users')
