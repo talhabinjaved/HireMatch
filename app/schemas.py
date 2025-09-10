@@ -13,8 +13,12 @@ class UserCreate(UserBase):
 
 
 class User(UserBase):
-    id: int
+    id: str
+    is_admin: bool = False
+    is_super_admin: bool = False
+    is_active: bool = True
     created_at: datetime
+    updated_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
@@ -22,6 +26,7 @@ class User(UserBase):
 
 class Token(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str
 
 
@@ -41,8 +46,8 @@ class JobDescriptionCreate(BaseModel):
 
 
 class JobDescription(JobDescriptionBase):
-    id: int
-    user_id: int
+    id: str
+    user_id: str
     created_at: datetime
     
     class Config:
@@ -59,8 +64,8 @@ class CVCreate(CVBase):
 
 
 class CV(CVBase):
-    id: int
-    user_id: int
+    id: str
+    user_id: str
     filename: str
     content: str
     created_at: datetime
@@ -79,12 +84,12 @@ class ShortlistResultBase(BaseModel):
 
 
 class ShortlistResultCreate(ShortlistResultBase):
-    cv_id: int
+    cv_id: str
 
 
 class ShortlistResult(ShortlistResultBase):
-    id: int
-    shortlist_id: int
+    id: str
+    shortlist_id: str
     cv: CV
     
     class Config:
@@ -96,14 +101,14 @@ class ShortlistBase(BaseModel):
 
 
 class ShortlistCreate(ShortlistBase):
-    job_description_id: int
-    cv_ids: List[int]
+    job_description_id: str
+    cv_ids: List[str]
 
 
 class Shortlist(ShortlistBase):
-    id: int
-    user_id: int
-    job_description_id: int
+    id: str
+    user_id: str
+    job_description_id: str
     created_at: datetime
     results: List[ShortlistResult]
     
@@ -119,3 +124,87 @@ class ShortlistReport(BaseModel):
     total_candidates: int
     shortlisted_count: int
     rejected_count: int
+
+
+class UserCreateAdmin(BaseModel):
+    email: EmailStr
+    username: str
+    password: str
+    is_admin: bool = False
+    is_super_admin: bool = False
+
+
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
+    is_admin: Optional[bool] = None
+    is_super_admin: Optional[bool] = None
+    is_active: Optional[bool] = None
+
+
+class OAuth2ClientBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    client_type: str = "confidential"  # confidential or public
+    allowed_scopes: List[str] = ["read", "write"]
+    redirect_uris: List[str] = []
+    rate_limit_per_hour: int = 1000
+
+
+class OAuth2ClientCreate(OAuth2ClientBase):
+    pass
+
+
+class OAuth2ClientUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    allowed_scopes: Optional[List[str]] = None
+    redirect_uris: Optional[List[str]] = None
+    rate_limit_per_hour: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+class OAuth2Client(OAuth2ClientBase):
+    id: str
+    client_id: str
+    is_active: bool
+    last_used_at: Optional[datetime] = None
+    created_by: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class OAuth2ClientResponse(OAuth2Client):
+    client_secret: str
+
+
+class ClientCredentialsToken(BaseModel):
+    access_token: str
+    token_type: str = "Bearer"
+    expires_in: int
+    scope: str
+
+
+class APIUsageStats(BaseModel):
+    client_id: str
+    total_requests: int
+    requests_last_24h: int
+    requests_last_hour: int
+    average_response_time: float
+    error_rate: float
+
+
+class AccessTokenInfo(BaseModel):
+    id: str
+    client_id: str
+    scopes: List[str]
+    is_active: bool
+    expires_at: datetime
+    created_at: datetime
+    last_used_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True

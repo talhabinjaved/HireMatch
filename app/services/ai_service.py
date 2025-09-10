@@ -2,6 +2,7 @@ import openai
 import numpy as np
 from typing import List, Dict, Any
 from app.config import settings
+from app.services.pinecone_service import pinecone_service
 
 
 class AIService:
@@ -26,6 +27,25 @@ class AIService:
         
         similarity = dot_product / (norm1 * norm2)
         return float(similarity)
+    
+    def store_cv_embedding(self, cv_id: str, embedding: List[float], metadata: Dict[str, Any], user_id: str):
+        vector_data = {
+            "id": cv_id,
+            "values": embedding,
+            "metadata": metadata
+        }
+        pinecone_service.upsert_vectors([vector_data], namespace=user_id)
+    
+    def search_similar_cvs(self, query_embedding: List[float], user_id: str, top_k: int = 10) -> List[Dict[str, Any]]:
+        results = pinecone_service.query_vectors(
+            query_vector=query_embedding,
+            top_k=top_k,
+            namespace=user_id
+        )
+        return results.matches if results else []
+    
+    def delete_cv_embedding(self, cv_id: str, user_id: str):
+        pinecone_service.delete_vectors([cv_id], namespace=user_id)
     
     def analyze_cv_match(self, cv_content: str, job_description: str, score: float) -> Dict[str, Any]:
         prompt = f"""
