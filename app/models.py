@@ -100,9 +100,9 @@ class OAuth2Client(Base):
     
     created_by_user = relationship("User", back_populates="created_clients")
     access_tokens = relationship("AccessToken", back_populates="client")
-    job_descriptions = relationship("JobDescription", foreign_keys="JobDescription.client_id")
-    cvs = relationship("CV", foreign_keys="CV.client_id")
-    shortlists = relationship("Shortlist", foreign_keys="Shortlist.client_id")
+    job_descriptions = relationship("JobDescription", foreign_keys="JobDescription.client_id", overlaps="client")
+    cvs = relationship("CV", foreign_keys="CV.client_id", overlaps="client")
+    shortlists = relationship("Shortlist", foreign_keys="Shortlist.client_id", overlaps="client")
 
 
 class AccessToken(Base):
