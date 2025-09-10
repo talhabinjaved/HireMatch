@@ -79,7 +79,6 @@ def create_super_admin():
             email=email,
             username=username,
             hashed_password=hashed_password,
-            is_admin=True,
             is_super_admin=True,
             is_active=True
         )

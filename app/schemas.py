@@ -14,7 +14,6 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: str
-    is_admin: bool = False
     is_super_admin: bool = False
     is_active: bool = True
     created_at: datetime
@@ -130,14 +129,12 @@ class UserCreateAdmin(BaseModel):
     email: EmailStr
     username: str
     password: str
-    is_admin: bool = False
     is_super_admin: bool = False
 
 
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     username: Optional[str] = None
-    is_admin: Optional[bool] = None
     is_super_admin: Optional[bool] = None
     is_active: Optional[bool] = None
 
